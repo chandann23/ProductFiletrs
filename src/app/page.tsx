@@ -1,103 +1,110 @@
-import Image from "next/image";
+"use client"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { QueryResult } from "@upstash/vector";
+import { ChevronDown, Filter } from "lucide-react";
+import { useState } from "react";
+import axios from "axios";
+import { Product } from "@/db";
+import ProductCard from "@/components/Products/Product";
+
+
+
+
+
+//using as const makes the values immutable
+//SORTOPTIONS is an array of objects which describes how to sort the products by price
+const SORT_OPTIONS = [
+  { name: 'None', value: 'none' },
+  { name: 'Price: Low to High', value: 'price-asc' },
+  { name: 'Price: High to Low', value: 'price-desc' },
+] as const
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [filter, setFilter] = useState({
+    sort: "none",
+  })
+  console.log(filter)
+
+  const { data: products } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data } = await axios.post<QueryResult<Product>[]>(
+        'http://localhost:3000/api/products',
+        {
+          filter: {
+            sort: filter.sort,
+          },
+        }
+      )
+
+      return data
+    },
+  })
+
+  console.log(products)
+
+
+
+
+
+  return (
+    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+          high quality product filters
+        </h1>
+        <div className="flex items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger className='group inline-flex justify-center text-sm font-medium text-gray-700 hover:text-gray-900'>
+              Sort
+              <ChevronDown className='-mr-1 ml-1 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-gray-500' />
+
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+
+              {SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.name}
+                  onClick={() => setFilter(prev => ({ ...prev, sort: option.value }))}
+                  className={cn('text-left w-full block px-4 py-2 text-sm', {
+                    'text-gray-900 bg-gray-100': option.value === filter.sort,
+                    'text-gray-500': option.value !== filter.sort,
+                  })}
+                >
+                  {option.name}
+
+                </button>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <button className='-m-2 ml-4 p-2 text-gray-400 hover:text-gray-500 sm:ml-6 lg:hidden'>
+            <Filter className='h-5 w-5' />
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+      </div>
+      <section className="pb-24 pt-6">
+
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+
+          {/* Filters*/}
+          <div></div>
+
+          {/* Products*/}
+
+          <ul className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+
+            {products?.map((product) => (
+
+              <ProductCard product={product.metadata!} key={product.id} />
+
+            ))}
+          </ul>
+        </div>
+      </section>
+    </main>
   );
 }
